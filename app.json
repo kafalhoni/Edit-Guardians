@@ -1,0 +1,48 @@
+{
+    "name": "Edit Guardian Bot",
+    "description": "A Telegram bot that automatically deletes edited messages in groups to maintain transparency in conversations.",
+    "logo": "https://telegra.ph/file/b0a0c7a69cd3e0c4d5b41.jpg",
+    "keywords": [
+        "python3",
+        "telegram",
+        "bot",
+        "guardian",
+        "edit",
+        "telegram-bot",
+        "pyrogram",
+        "message-protection"
+    ],
+    "env": {
+        "BOT_TOKEN": {
+            "description": "Get your bot token from @BotFather on Telegram",
+            "value": "",
+            "required": true
+        },
+        "ADMIN_ID": {
+            "description": "Your Telegram User ID. Get it from @userinfobot",
+            "value": "",
+            "required": true
+        },
+        "MONGO_URL": {
+            "description": "Get a MongoDB connection string from https://cloud.mongodb.com",
+            "value": "",
+            "required": true
+        },
+        "CHANNEL_URL": {
+            "description": "Your channel link for bot promotion (e.g., https://t.me/yourchannel)",
+            "value": "https://t.me/ShrutiBots",
+            "required": false
+        },
+        "SUPPORT_GROUP_URL": {
+            "description": "Your support group link (e.g., https://t.me/yoursupportgroup)",
+            "value": "https://t.me/ShrutiBotSupport",
+            "required": false
+        }
+    },
+    "buildpacks": [
+        {
+            "url": "heroku/python"
+        }
+    ],
+    "stack": "container"
+}
