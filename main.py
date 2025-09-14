@@ -20,7 +20,6 @@ ADMIN_ID = int(os.getenv("ADMIN_ID"))
 MONGO_URL = os.getenv("MONGO_URL")
 CHANNEL_URL = os.getenv("CHANNEL_URL")
 SUPPORT_GROUP_URL = os.getenv("SUPPORT_GROUP_URL")
-CURRENT_ADMIN_ID = 7574330905
 
 mongo_client = MongoClient(MONGO_URL)
 db = mongo_client["NYCREATION"]
