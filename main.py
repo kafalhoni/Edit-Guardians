@@ -1,6 +1,6 @@
 import os
 import logging
-import threading
+import asyncio
 from flask import Flask
 from pymongo import MongoClient
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -15,7 +15,7 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 
-# load env
+# load environment variables
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -26,7 +26,7 @@ SUPPORT_GROUP_URL = os.getenv("SUPPORT_GROUP_URL", "")
 
 # mongo setup
 mongo_client = MongoClient(MONGO_URL)
-db = mongo_client["GUARDIAN"]
+db = mongo_client["NYCREATION"]
 users_col = db["users"]
 groups_col = db["groups"]
 
@@ -35,7 +35,7 @@ flask_app = Flask(__name__)
 
 @flask_app.route("/")
 def home():
-    return "🟢 edit guardian bot is running successfully"
+    return "🟢 ᴇᴅɪᴛ ɢᴜᴀʀᴅɪᴀɴ ʙᴏᴛ ɪs ʀᴜɴɴɪɴɢ sᴜᴄᴄᴇssꜰᴜʟʟʏ"
 
 # logging
 logging.basicConfig(
@@ -83,9 +83,9 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer()
         text = (
             "⚙️ <b>ʜᴇʟᴘ ᴍᴇɴᴜ</b>\n\n"
-            "🔹 <b>ᴍᴇssᴀɢᴇ ɢᴜᴀʀᴅɪᴀɴ:</b> ɪғ sᴏᴍᴇᴏɴᴇ ᴇᴅɪᴛs ᴀ ᴍᴇssᴀɢᴇ ɪɴ ɢʀᴏᴜᴘ, ʙᴏᴛ ᴡɪʟʟ ᴅᴇʟᴇᴛᴇ ɪᴛ.\n"
-            "🔹 <b>ʙʀᴏᴀᴅᴄᴀsᴛ:</b> ᴏɴʟʏ ᴀᴅᴍɪɴ ᴄᴀɴ sᴇɴᴅ ᴍᴇssᴀɢᴇs ᴛᴏ ᴀʟʟ ᴜsᴇʀs & ɢʀᴏᴜᴘs.\n\n"
-            "✅ ᴍᴀᴋᴇ sᴜʀᴇ ʙᴏᴛ ʜᴀs <b>ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇ</b> ʀɪɢʜᴛs ɪɴ ɢʀᴏᴜᴘs."
+            "🔹 <b>ᴍᴇssᴀɢᴇ ɢᴜᴀʀᴅɪᴀɴ:</b> ɪғ ᴀ ᴍᴇssᴀɢᴇ ɪs ᴇᴅɪᴛᴇᴅ, ɪᴛ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ.\n"
+            "🔹 <b>ʙʀᴏᴀᴅᴄᴀsᴛ:</b> ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ sᴇɴᴅ ᴛᴏ ᴀʟʟ ᴜsᴇʀs & ɢʀᴏᴜᴘs.\n\n"
+            "✅ ᴍᴀᴋᴇ sᴜʀᴇ ʙᴏᴛ ʜᴀs <b>ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇ</b> ᴘᴇʀᴍɪssɪᴏɴ."
         )
         await query.edit_message_text(text, parse_mode="HTML")
 
@@ -100,50 +100,41 @@ async def edited_message_handler(update: Update, context: ContextTypes.DEFAULT_T
     user = message.from_user
     try:
         await message.delete()
-        warn_text = f"⚠️ {mention_html(user.id, user.first_name)}, ʏᴏᴜ ᴇᴅɪᴛᴇᴅ ᴀ ᴍᴇssᴀɢᴇ sᴏ ɪᴛ ᴡᴀs ᴅᴇʟᴇᴛᴇᴅ."
+        warn_text = f"⚠️ {mention_html(user.id, user.first_name)}, ʏᴏᴜ ᴇᴅɪᴛᴇᴅ ᴀ ᴍᴇssᴀɢᴇ, sᴏ ɪᴛ ᴡᴀs ᴅᴇʟᴇᴛᴇᴅ."
         await chat.send_message(warn_text, parse_mode="HTML")
     except Exception as e:
         logger.error(f"Failed to delete edited message: {e}")
 
 # ─────────────────────────────
-# broadcast command
+# broadcast
 # ─────────────────────────────
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     CURRENT_ADMIN_ID = 7804972365 
     user_id = update.effective_user.id
-
     if user_id not in [ADMIN_ID, CURRENT_ADMIN_ID]:
         return await update.message.reply_text("❌ ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴜᴛʜᴏʀɪᴢᴇᴅ ᴛᴏ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.")
-
     if not context.args:
         return await update.message.reply_text("ᴜsᴀɢᴇ: /broadcast <ᴍᴇssᴀɢᴇ>")
-
     text = " ".join(context.args)
-    sent_count = 0
-    failed_count = 0
-
+    sent, failed = 0, 0
     for user in users_col.find():
         try:
-            await context.bot.send_message(chat_id=user["_id"], text=text)
-            sent_count += 1
-        except Exception as e:
-            failed_count += 1
-            logger.warning(f"Failed to send to user {user['_id']}: {e}")
-
+            await context.bot.send_message(user["_id"], text)
+            sent += 1
+        except:
+            failed += 1
     for group in groups_col.find():
         try:
-            await context.bot.send_message(chat_id=group["_id"], text=text)
-            sent_count += 1
-        except Exception as e:
-            failed_count += 1
-            logger.warning(f"Failed to send to group {group['_id']}: {e}")
-
-    await update.message.reply_text(f"✅ ʙʀᴏᴀᴅᴄᴀsᴛ ᴄᴏᴍᴘʟᴇᴛᴇ.\n\nsᴇɴᴛ: {sent_count}\nғᴀɪʟᴇᴅ: {failed_count}")
+            await context.bot.send_message(group["_id"], text)
+            sent += 1
+        except:
+            failed += 1
+    await update.message.reply_text(f"✅ ʙʀᴏᴀᴅᴄᴀsᴛ ᴄᴏᴍᴘʟᴇᴛᴇ.\n\nsᴇɴᴛ: {sent}\nғᴀɪʟᴇᴅ: {failed}")
 
 # ─────────────────────────────
-# run bot
+# async runner
 # ─────────────────────────────
-def run_bot():
+async def main():
     application = Application.builder().token(BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
@@ -152,12 +143,12 @@ def run_bot():
     application.add_handler(CommandHandler("broadcast", broadcast))
 
     logger.info("edit guardian bot started 🚀")
-    application.run_polling(drop_pending_updates=True)
 
-# ─────────────────────────────
-# main
-# ─────────────────────────────
+    # run telegram bot + flask concurrently
+    port = int(os.environ.get("PORT", 8080))
+    flask_task = asyncio.to_thread(flask_app.run, host="0.0.0.0", port=port)
+    bot_task = application.run_polling(drop_pending_updates=True)
+    await asyncio.gather(flask_task, bot_task)
+
 if __name__ == "__main__":
-    threading.Thread(target=run_bot, daemon=True).start()
-    port = int(os.environ.get("PORT", 10000))
-    flask_app.run(host="0.0.0.0", port=port)
+    asyncio.run(main())
